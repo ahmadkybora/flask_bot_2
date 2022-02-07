@@ -1,35 +1,46 @@
 import os
 import requests
 from flask import Flask
+import logging
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 token = '2016260844:AAGwWwI6ZLA7cLUNNcAbbFz2W84wkJebZyo'
-url = "https://api.telegram.org/bot" + token + "/"
+# url = "https://api.telegram.org/bot" + token + "/"
 
 @app.route("/")
-def get_updates_json(request):  
-    response = requests.get(request + 'getUpdates')
-    return response.json()
+def start(update, context):
+    """Send a message when the command /start is issued."""
+    update.message.reply_text('Hi!')
 
-def last_update(data):  
-    results = data['result']
-    total_updates = len(results) - 1
-    return results[total_updates]
+def help(update, context):
+    """Send a message when the command /help is issued."""
+    update.message.reply_text('Help!')
 
-def get_chat_id(update):  
-    chat_id = update['message']['chat']['id']
-    return chat_id
+def echo(update, context):
+    """Echo the user message."""
+    update.message.reply_text(update.message.text)
 
-def send_mess(chat, text):  
-    params = {'chat_id': chat, 'text': text}
-    response = requests.post(url + 'sendMessage', data=params)
-    return response
+def error(update, context):
+    """Log Errors caused by Updates."""
+    logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-chat_id = get_chat_id(last_update(get_updates_json(url)))
+def main():
+    """Start the bot."""
+    updater = Updater(token, use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(MessageHandler(Filters.text, echo))
+    dp.add_error_handler(error)
+    updater.start_polling()
+    updater.idle()
 
-send_mess(chat_id, 'Your message goes here')
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(debug=True, host='0.0.0.0', port=port)
+    main()
