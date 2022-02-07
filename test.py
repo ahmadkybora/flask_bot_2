@@ -1,12 +1,14 @@
 from flask import Flask
-
+import os
 
 app = Flask(__name__)
-app.route("/")
+
+@app.route("/")
 def home():
     return "ok"
 
-if __name__ == '__main__':
-    import os
-    PORT= os.getenv("PORT", 5000)
-    app.run("0,0,0,", 5000)
+home()
+
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 8080))
+    app.run(debug=True, host='0.0.0.0', port=port)
